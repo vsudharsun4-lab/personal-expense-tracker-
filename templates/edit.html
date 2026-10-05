@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit expense | Spendwell</title>
+  <style>
+    body { margin: 0; background: #f6f8f2; color: #18231d; font: 16px Georgia, serif; }
+    main { width: min(560px, calc(100% - 32px)); margin: 80px auto; } .eyebrow { color: #ef6c4d; font: bold 12px Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    .card { background: white; border: 1px solid #dce5db; border-radius: 6px; padding: 28px; } h1 { font-size: 2.5rem; margin: 10px 0 28px; }
+    form { display: grid; gap: 16px; } label { display: grid; gap: 6px; font: 12px Arial, sans-serif; color: #718078; text-transform: uppercase; letter-spacing: .08em; } input { border: 1px solid #dce5db; border-radius: 4px; padding: 12px; font-size: 16px; } button { border: 0; border-radius: 4px; padding: 12px; background: #18231d; color: white; cursor: pointer; } a { color: #39735b; font: 14px Arial, sans-serif; text-decoration: none; }
+  </style>
+</head>
+<body><main><div class="card"><div class="eyebrow">Update entry</div><h1>Edit expense</h1><form method="post"><label>Category<input name="category" value="{{ expense.category }}" required></label><label>Amount<input type="number" name="amount" value="{{ '%.2f'|format(expense.amount) }}" step="0.01" min="0.01" required></label><label>Date<input type="date" name="date" value="{{ expense.date }}" required></label><button type="submit">Save changes</button></form><p style="margin-bottom:0"><a href="{{ url_for('dashboard') }}">Back to dashboard</a></p></div></main></body>
+</html>

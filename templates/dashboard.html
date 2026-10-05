@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spendwell | Expense Tracker</title>
+  <style>
+    :root { --ink: #18231d; --muted: #718078; --paper: #f6f8f2; --card: #fff; --line: #dce5db; --accent: #ef6c4d; --green: #39735b; --warning: #a6532f; }
+    * { box-sizing: border-box; } body { margin: 0; background: var(--paper); color: var(--ink); font: 16px Georgia, serif; }
+    main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 64px; }
+    header { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 36px; }
+    h1, h2, p { margin-top: 0; } h1 { font-size: clamp(2.3rem, 6vw, 4.8rem); line-height: .95; max-width: 620px; margin-bottom: 14px; }
+    h2 { font-size: 1.25rem; } .eyebrow { color: var(--accent); font: bold 12px Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    .month-form, input, button { font: 15px Arial, sans-serif; } input { border: 1px solid var(--line); border-radius: 4px; padding: 11px 12px; background: #fff; color: var(--ink); }
+    button { border: 0; border-radius: 4px; padding: 11px 16px; background: var(--ink); color: #fff; cursor: pointer; } button:hover { background: var(--green); }
+    .grid { display: grid; grid-template-columns: 1.35fr .85fr; gap: 18px; } .card { background: var(--card); border: 1px solid var(--line); padding: 24px; border-radius: 6px; }
+    .add { grid-row: span 2; } .fields { display: grid; gap: 13px; } label { display: grid; gap: 6px; font: 12px Arial, sans-serif; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; } .stat { padding: 15px; background: #edf3e9; } .stat strong { display: block; font-size: 1.45rem; margin-top: 5px; }
+    .bar { display: flex; align-items: end; gap: 12px; height: 150px; border-bottom: 1px solid var(--line); padding: 8px 0 0; } .bar-item { flex: 1; min-width: 35px; text-align: center; font: 11px Arial, sans-serif; color: var(--muted); } .bar-fill { min-height: 4px; background: var(--accent); margin-bottom: 7px; border-radius: 3px 3px 0 0; }
+    .toolbar { display: flex; gap: 8px; margin-bottom: 14px; } .toolbar input { flex: 1; } .expense { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 15px; border-top: 1px solid var(--line); padding: 14px 0; } .expense small { display: block; color: var(--muted); margin-top: 4px; } .amount { font-weight: bold; } .link { color: var(--green); text-decoration: none; font: 13px Arial, sans-serif; }
+    .danger { background: transparent; color: var(--warning); padding: 4px; } .danger:hover { background: #fff0e9; } .notice { padding: 12px 15px; margin-bottom: 18px; background: #e6f1e8; border-left: 4px solid var(--green); font-family: Arial, sans-serif; } .notice.error { background: #fff0e9; border-color: var(--warning); }
+    @media (max-width: 760px) { main { padding-top: 28px; } header, .grid { display: block; } header > form { margin-top: 20px; } .card { margin-bottom: 18px; } .stats { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><div class="eyebrow">Personal finance, made visible</div><h1>Know where your money goes.</h1><p>Track the month, notice the patterns, keep the choices yours.</p></div>
+    <form class="month-form" method="get"><label>Viewing month<input type="month" name="month" value="{{ selected_month }}" onchange="this.form.submit()"></label></form>
+  </header>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+  {% if budget_warning %}<div class="notice error">You are ₹{{ '%.2f'|format(-budget_remaining) }} over your monthly budget.</div>{% endif %}
+  <section class="grid">
+    <div class="card add"><div class="eyebrow">New entry</div><h2>Add an expense</h2><form class="fields" method="post"><label>Category<input name="category" placeholder="Food, travel, bills..." required></label><label>Amount<input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required></label><label>Date<input type="date" name="date" value="{{ selected_month }}-01" required></label><button type="submit">Add expense</button></form><hr style="border:0;border-top:1px solid var(--line);margin:30px 0"><div class="eyebrow">Monthly guardrail</div><h2>Set your budget</h2><form class="toolbar" method="post" action="{{ url_for('set_budget') }}"><input type="number" name="budget" value="{{ '%.2f'|format(budget) }}" step="0.01" min="0.01"><button type="submit">Save</button></form></div>
+    <div class="card"><div class="stats"><div class="stat"><span class="eyebrow">Spent</span><strong>₹{{ '%.2f'|format(total) }}</strong></div><div class="stat"><span class="eyebrow">Entries</span><strong>{{ count }}</strong></div><div class="stat"><span class="eyebrow">Left</span><strong>₹{{ '%.2f'|format(budget_remaining) }}</strong></div></div>{% if highest %}<p>Highest expense: <strong>{{ highest.category }}</strong> at ₹{{ '%.2f'|format(highest.amount) }}</p>{% endif %}</div>
+    <div class="card"><div class="eyebrow">By category</div><h2>Where it went</h2>{% if categories %}{% set maximum = categories.values()|max %}<div class="bar">{% for category, value in categories.items() %}<div class="bar-item"><div class="bar-fill" style="height: {{ (value / maximum * 110)|int }}px" title="₹{{ '%.2f'|format(value) }}"></div>{{ category }}</div>{% endfor %}</div>{% else %}<p>No expenses in this month yet.</p>{% endif %}</div>
+  </section>
+  <section class="card" style="margin-top:18px"><div class="eyebrow">Your ledger</div><h2>Expenses</h2><form class="toolbar" method="get"><input type="hidden" name="month" value="{{ selected_month }}"><input name="search" value="{{ search }}" placeholder="Search by category"><button type="submit">Search</button></form>{% for expense in expenses %}<div class="expense"><div><strong>{{ expense.category }}</strong><small>{{ expense.date }}</small></div><span class="amount">₹{{ '%.2f'|format(expense.amount) }}</span><span><a class="link" href="{{ url_for('edit_expense', expense_id=expense.id) }}">Edit</a><form style="display:inline" method="post" action="{{ url_for('delete_expense', expense_id=expense.id) }}"><button class="danger" type="submit" aria-label="Delete expense">Delete</button></form></span></div>{% else %}<p>No matching expenses found.</p>{% endfor %}</section>
+</main>
+</body>
+</html>
